@@ -1,0 +1,169 @@
+﻿@using WhiskyShop.Domain
+@using Microsoft.Extensions.Options
+@model WhiskyShop.Domain.DTO.ShoppingCartDto
+@inject IOptions<StripeSettings> Stripe
+
+@{
+    ViewData["Title"] = "Shopping Cart";
+}
+
+<style>
+    body {
+        background-color: #121212;
+        color: #e0e0e0;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+
+    h1 {
+        text-align: center;
+        font-size: 3em;
+        margin: 20px 0;
+    }
+
+    .container {
+        padding: 20px;
+        width: 80%;
+        margin: auto;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        color: #e0e0e0;
+    }
+
+        table th, table td {
+            border: 1px solid #444;
+            padding: 15px;
+            text-align: center;
+            color: #d4af37;
+        }
+
+        table th {
+            background-color: #1e1e1e;
+        }
+
+        table tr:nth-child(even) {
+            background-color: #2b2b2b;
+        }
+
+        table tr:hover {
+            background-color: #333;
+        }
+
+    .btn-pay {
+        display: block;
+        margin: 30px auto;
+        background-color: #d4af37;
+        color: #121212;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 5px;
+        font-size: 1.2em;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+        .btn-pay:hover {
+            background-color: #b18d2c;
+        }
+
+    .delete-link {
+        color: #d4af37;
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+
+        .delete-link:hover {
+            color: #b18d2c;
+        }
+
+    tfoot th {
+        text-align: right;
+        font-size: 1.2em;
+    }
+
+    .stripe-button-el {
+        display: none;
+    }
+
+    .stripe-custom-button {
+        background-color: #d4af37;
+        color: #121212;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 5px;
+        font-size: 1.2em;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+        .stripe-custom-button:hover {
+            background-color: #b18d2c;
+        }
+</style>
+
+<div class="container">
+    <h1>Shopping Cart</h1>
+
+    @if (Model.TotalPrice != 0)
+    {
+        <form asp-controller="ShoppingCarts" asp-action="PayOrder" method="post" id="stripe-form">
+            <article>
+                <button type="button" class="stripe-custom-button" id="custom-stripe-button">Pay $@Model.TotalPrice</button>
+                <script src="https://checkout.stripe.com/checkout.js"
+                        class="stripe-button"
+                        data-key="@Stripe.Value.PublishableKey"
+                        data-locale="auto"
+                        data-description="EShop Application Payment"
+                        data-amount="@(Model.TotalPrice * 100)"
+                        data-label="Pay $@Model.TotalPrice">
+                </script>
+            </article>
+        </form>
+    }
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Product name</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (int i = 0; i < Model.Products.Count(); i++)
+            {
+                var item = Model.Products[i];
+                <tr>
+                    <td>@(i + 1)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Product.ProductName)</td>
+                    <td>$@Html.DisplayFor(modelItem => item.Product.Price)</td>
+                    <td>@Html.DisplayFor(modelItem => item.Quantity)</td>
+                    <td>
+                        <a asp-action="DeleteFromShoppingCart" asp-controller="ShoppingCarts" asp-route-id="@item.Product.Id" class="delete-link">Delete</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="3"></th>
+                <th>Total:</th>
+                <th>$@Model.TotalPrice</th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<script>
+    document.getElementById('custom-stripe-button').addEventListener('click', function (e) {
+        e.preventDefault();
+        document.querySelector('.stripe-button-el').click();
+    });
+</script>
